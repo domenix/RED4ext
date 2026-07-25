@@ -2,6 +2,7 @@
 #include "Addresses.hpp"
 #include "Detail/AddressHashes.hpp"
 #include "Hook.hpp"
+#include "Utils.hpp"
 #include "stdafx.hpp"
 
 namespace
@@ -31,7 +32,7 @@ void _CollectSaveableSystems(void* a1, const RED4ext::DynArray<RED4ext::Handle<R
 
         saveableSystems.PushBack(system);
 
-        if (saveableSystems.size == MaxSaveableSystems)
+        if (Utils::ArraySize(saveableSystems) == MaxSaveableSystems)
             break;
     }
 

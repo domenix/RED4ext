@@ -77,3 +77,57 @@ jobs:
         with:
           name: red4ext-${{ env.RED4EXT_BUILD_CONFIG }}-${{ env.RED4EXT_BUILD_COMMIT_SHA }}
           path: build/install
+
+  build-macos:
+    name: Build macOS (${{ matrix.config }})
+    runs-on: macos-15 # Apple Silicon
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # The macOS build needs an SDK that compiles with Clang, which the pinned 1.0.0 tag does
+      # not. Until a released SDK carries the port, check one out and point the build at it.
+      - name: Checkout RED4ext.SDK
+        uses: actions/checkout@v6
+        with:
+          repository: WopsS/RED4ext.SDK
+          ref: master
+          path: .sdk
+
+      - name: Install Ninja
+        run: brew install ninja
+
+      - name: Configure (CMake)
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
+            -DRED4EXT_GIT_METADATA=ON \
+            -DRED4EXT_SDK_SOURCE_DIR="${{ github.workspace }}/.sdk"
+
+      - name: Build
+        run: cmake --build build
+
+      # The instruction relocator is the part of the arm64 hook engine that fails silently when
+      # it is wrong, so exercise it on every build rather than only against the game.
+      - name: Test the arm64 hook engine
+        run: |
+          clang++ -std=c++20 -arch arm64 -O1 -Wall -Wextra \
+            -DRED4EXT_PLATFORM_NO_LOGGING \
+            -I src/dll \
+            -I build/_deps/spdlog-src/include \
+            -I build/_deps/fmt-src/include \
+            -framework CoreFoundation \
+            -o /tmp/hookengine-test \
+            tests/HookEngineArm64Test.cpp \
+            src/dll/Platform/HookEngineArm64.cpp \
+            src/dll/Platform/MacPlatform.cpp \
+            build/_deps/spdlog-build/libspdlog*.a build/_deps/fmt-build/libfmt*.a
+          /tmp/hookengine-test

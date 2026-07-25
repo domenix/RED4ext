@@ -10,7 +10,6 @@
 #include <RED4ext/Api/v1/Scripts.hpp>
 #include <RED4ext/Api/v1/Sdk.hpp>
 #include <RED4ext/Api/v1/SemVer.hpp>
-#include <wil/resource.h>
 
 #include <cstdint>
 #include <filesystem>
@@ -21,7 +20,7 @@ namespace v1
 class Plugin : public PluginBase
 {
 public:
-    Plugin(const std::filesystem::path& aPath, wil::unique_hmodule aModule);
+    Plugin(const std::filesystem::path& aPath, Platform::UniqueModule aModule);
 
     const uint32_t GetApiVersion() const final;
     void* GetPluginInfo() final;

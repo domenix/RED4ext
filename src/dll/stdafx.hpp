@@ -14,9 +14,15 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>
 #include <unordered_set>
+#include <vector>
 
-#include <Windows.h>
+// Brings in <Windows.h> on Windows, and the handful of Win32 spellings the runtime uses
+// elsewhere. Must come before the third-party headers, as <Windows.h> did.
+#include "Platform.hpp"
+
+#ifdef _WIN32
 #include <winternl.h>
 
 #include <detours.h>
@@ -24,6 +30,7 @@
 #include <wil/resource.h>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
+#endif
 
 #include <fmt/core.h>
 #include <fmt/format.h>

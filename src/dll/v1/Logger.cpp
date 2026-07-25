@@ -4,6 +4,8 @@
 #include <RED4ext/Api/v1/PluginHandle.hpp>
 #include <fmt/format.h>
 
+#include "Platform.hpp"
+
 #include <cstdarg>
 #include <cstdio>
 #include <vector>
@@ -53,12 +55,17 @@
     va_list args;                                                                                                      \
     va_start(args, aFormat);                                                                                           \
                                                                                                                        \
+    /* Measuring consumes the list, so formatting needs its own copy. Reusing it worked by    */                       \
+    /* accident where va_list is a pointer; on arm64 it is a struct and reuse is undefined.   */                       \
+    va_list formatArgs;                                                                                                \
+    va_copy(formatArgs, args);                                                                                         \
+                                                                                                                       \
     auto len = count_fn(aFormat, args);                                                                                \
     if (len > 0)                                                                                                       \
     {                                                                                                                  \
         std::vector<char_type> buffer(len + 1); /* len + NULL character. */                                            \
                                                                                                                        \
-        auto res = format_fn(buffer.data(), buffer.size(), buffer.size() - 1, aFormat, args);                          \
+        auto res = format_fn(buffer.data(), buffer.size(), buffer.size() - 1, aFormat, formatArgs);                    \
         if (res > 0)                                                                                                   \
         {                                                                                                              \
             auto loggerSystem = app->GetLoggerSystem();                                                                \
@@ -86,7 +93,7 @@ void v1::Logger::Trace(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
 
 void v1::Logger::TraceF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Trace);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Trace);
 }
 
 void v1::Logger::TraceW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -96,7 +103,7 @@ void v1::Logger::TraceW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessa
 
 void v1::Logger::TraceWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Trace);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Trace);
 }
 
 void v1::Logger::Debug(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
@@ -106,7 +113,7 @@ void v1::Logger::Debug(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
 
 void v1::Logger::DebugF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Debug);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Debug);
 }
 
 void v1::Logger::DebugW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -116,7 +123,7 @@ void v1::Logger::DebugW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessa
 
 void v1::Logger::DebugWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Debug);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Debug);
 }
 
 void v1::Logger::Info(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
@@ -126,7 +133,7 @@ void v1::Logger::Info(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
 
 void v1::Logger::InfoF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Info);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Info);
 }
 
 void v1::Logger::InfoW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -136,7 +143,7 @@ void v1::Logger::InfoW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessag
 
 void v1::Logger::InfoWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Info);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Info);
 }
 
 void v1::Logger::Warn(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
@@ -146,7 +153,7 @@ void v1::Logger::Warn(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
 
 void v1::Logger::WarnF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Warn);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Warn);
 }
 
 void v1::Logger::WarnW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -156,7 +163,7 @@ void v1::Logger::WarnW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessag
 
 void v1::Logger::WarnWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Warn);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Warn);
 }
 
 void v1::Logger::Error(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
@@ -166,7 +173,7 @@ void v1::Logger::Error(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
 
 void v1::Logger::ErrorF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Error);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Error);
 }
 
 void v1::Logger::ErrorW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -176,7 +183,7 @@ void v1::Logger::ErrorW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessa
 
 void v1::Logger::ErrorWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Error);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Error);
 }
 
 void v1::Logger::Critical(RED4ext::v1::PluginHandle aHandle, const char* aMessage)
@@ -186,7 +193,7 @@ void v1::Logger::Critical(RED4ext::v1::PluginHandle aHandle, const char* aMessag
 
 void v1::Logger::CriticalF(RED4ext::v1::PluginHandle aHandle, const char* aFormat, ...)
 {
-    LogF(char, ::_vscprintf, ::vsnprintf_s, Critical);
+    LogF(char, Platform::FormattedLength, Platform::FormatInto, Critical);
 }
 
 void v1::Logger::CriticalW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMessage)
@@ -196,5 +203,5 @@ void v1::Logger::CriticalW(RED4ext::v1::PluginHandle aHandle, const wchar_t* aMe
 
 void v1::Logger::CriticalWF(RED4ext::v1::PluginHandle aHandle, const wchar_t* aFormat, ...)
 {
-    LogF(wchar_t, ::_vscwprintf, ::_vsnwprintf_s, Critical);
+    LogF(wchar_t, Platform::FormattedLength, Platform::FormatInto, Critical);
 }

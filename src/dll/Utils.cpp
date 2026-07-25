@@ -2,6 +2,7 @@
 #include "Config.hpp"
 #include "DevConsole.hpp"
 #include "Paths.hpp"
+#include "Platform.hpp"
 
 #include <ctime>
 #include <cwctype>
@@ -129,38 +130,12 @@ std::wstring Utils::GetStateName(RED4ext::EGameStateType aStateType)
 
 std::wstring Utils::FormatSystemMessage(uint32_t aMessageId)
 {
-    wil::last_error_context last_error;
-    wil::unique_hlocal_ptr<wchar_t> buffer;
-
-    auto len =
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                      nullptr, aMessageId, LANG_USER_DEFAULT, wil::out_param_ptr<LPWSTR>(buffer), 0, nullptr);
-    if (!len)
-    {
-        return fmt::format(L"Could not format the system message for the specified message id ({}), error code: {}",
-                           aMessageId, GetLastError());
-    }
-
-    std::wstring_view res = buffer.get();
-
-    // Remove the new lines at the end of the message, they are annoying.
-    if (res.ends_with(L'\n'))
-    {
-        res.remove_suffix(1);
-    }
-
-    if (res.ends_with(L'\r'))
-    {
-        res.remove_suffix(1);
-    }
-
-    return std::wstring(res);
+    return Platform::FormatSystemMessage(aMessageId);
 }
 
 std::wstring Utils::FormatLastError()
 {
-    auto err = GetLastError();
-    return FormatSystemMessage(err);
+    return Platform::FormatSystemMessage(Platform::GetLastErrorCode());
 }
 
 std::wstring Utils::FormatCurrentTimestamp()
@@ -169,8 +144,7 @@ std::wstring Utils::FormatCurrentTimestamp()
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
 
     // Convert to std::tm for formatting
-    std::tm now_tm;
-    localtime_s(&now_tm, &now_c);
+    std::tm now_tm = Platform::LocalTime(now_c);
 
     return fmt::format(L"{:04d}-{:02d}-{:02d}-{:02d}-{:02d}-{:02d}", now_tm.tm_year + 1900, now_tm.tm_mon + 1,
                        now_tm.tm_mday, now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec);
@@ -178,7 +152,7 @@ std::wstring Utils::FormatCurrentTimestamp()
 
 int32_t Utils::ShowMessageBoxEx(const std::wstring_view aCaption, const std::wstring_view aText, uint32_t aType)
 {
-    return MessageBox(nullptr, aText.data(), aCaption.data(), aType);
+    return Platform::ShowMessageBox(aCaption, aText, aType);
 }
 
 int32_t Utils::ShowMessageBox(const std::wstring_view aText, uint32_t aType)
@@ -188,55 +162,12 @@ int32_t Utils::ShowMessageBox(const std::wstring_view aText, uint32_t aType)
 
 std::string Utils::Narrow(const std::wstring_view aText)
 {
-    if (aText.empty())
-    {
-        return "";
-    }
-
-    std::string result;
-
-    auto len =
-        WideCharToMultiByte(CP_UTF8, 0, aText.data(), static_cast<int32_t>(aText.size()), nullptr, 0, NULL, NULL);
-    if (len)
-    {
-        result.resize(len);
-        len = WideCharToMultiByte(CP_UTF8, 0, aText.data(), static_cast<int32_t>(aText.size()), result.data(),
-                                  static_cast<int32_t>(result.size()), NULL, NULL);
-    }
-
-    // Second pass.
-    if (len <= 0)
-    {
-        result = fmt::format("Failed to convert wide to narrow string, last error is {}", GetLastError());
-    }
-
-    return result;
+    return Platform::Narrow(aText);
 }
 
 std::wstring Utils::Widen(const std::string_view aText)
 {
-    if (aText.empty())
-    {
-        return L"";
-    }
-
-    std::wstring result;
-
-    auto len = MultiByteToWideChar(CP_UTF8, 0, aText.data(), static_cast<int32_t>(aText.size()), nullptr, 0);
-    if (len)
-    {
-        result.resize(len);
-        len = MultiByteToWideChar(CP_UTF8, 0, aText.data(), static_cast<int32_t>(aText.size()), result.data(),
-                                  static_cast<int32_t>(result.size()));
-    }
-
-    // Second pass.
-    if (len <= 0)
-    {
-        result = fmt::format(L"Failed to convert narrow to wide string, last error is {}", GetLastError());
-    }
-
-    return result;
+    return Platform::Widen(aText);
 }
 
 std::wstring Utils::ToLower(const std::wstring& acText)

@@ -1,44 +1,51 @@
 #include "ScriptValidationError.hpp"
 #include "App.hpp"
 
+// sscanf_s is an MSVC extension. The scan-set conversions below are bounded the portable way
+// instead, with an explicit field width -- which is exactly what the buffer-size arguments
+// were achieving, so Windows behaviour is unchanged. Both buffers are char[64].
+#ifdef _MSC_VER
+#pragma warning(push)
+// C4996 'sscanf': every conversion below carries an explicit field width, which is exactly the
+// bound sscanf_s was being used for.
+#pragma warning(disable : 4996)
+#endif
+
 ValidationError ValidationError::FromString(const char* str)
 {
     ValidationErrorType type = ValidationErrorType::Unknown;
     char name[64] = {0};
     char parent[64] = {0};
 
-    if (sscanf_s(str, "Missing native class '%[^']'", name, (int)sizeof(name)) == 1)
+    if (sscanf(str, "Missing native class '%63[^']'", name) == 1)
     {
         type = ValidationErrorType::MissingClass;
     }
-    else if (sscanf_s(str, "Missing native global function '%[^']'", name, (int)sizeof(name)) == 1)
+    else if (sscanf(str, "Missing native global function '%63[^']'", name) == 1)
     {
         type = ValidationErrorType::MissingGlobalFunction;
     }
-    else if (sscanf_s(str, "Missing native function '%[^']' in native class '%[^']'", name, (int)sizeof(name), parent,
-                      (int)sizeof(parent)) == 2)
+    else if (sscanf(str, "Missing native function '%63[^']' in native class '%63[^']'", name, parent) == 2)
     {
         type = ValidationErrorType::MissingMethod;
     }
-    else if (sscanf_s(str, "Missing native property '%[^']' in native class '%[^']'", name, (int)sizeof(name), parent,
-                      (int)sizeof(parent)) == 2)
+    else if (sscanf(str, "Missing native property '%63[^']' in native class '%63[^']'", name, parent) == 2)
     {
         type = ValidationErrorType::MissingProperty;
     }
-    else if (sscanf_s(str, "Missing base class '%[^']' of native class '%[^']'", parent, (int)sizeof(parent), name,
-                      (int)sizeof(name)) == 2)
+    else if (sscanf(str, "Missing base class '%63[^']' of native class '%63[^']'", parent, name) == 2)
     {
         type = ValidationErrorType::MissingBaseClass;
     }
-    else if (sscanf_s(
+    else if (sscanf(
                  str,
-                 "Native class '%[^']' has declared base class '%[^']' that is different than current one '%*[^']'",
-                 name, (int)sizeof(name), parent, (int)sizeof(parent)) == 2)
+                 "Native class '%63[^']' has declared base class '%63[^']' that is different than current one '%*[^']'",
+                 name, parent) == 2)
     {
         type = ValidationErrorType::BaseClassMismatch;
     }
-    else if (sscanf_s(str, "Imported property '%[^.].%[^']' type '%*[^']' does not match with the native one '%*[^']'",
-                      parent, (int)sizeof(parent), name, (int)sizeof(name)) == 2)
+    else if (sscanf(str, "Imported property '%63[^.].%63[^']' type '%*[^']' does not match with the native one '%*[^']'",
+                      parent, name) == 2)
     {
         type = ValidationErrorType::PropertyTypeMismatch;
     }
@@ -77,3 +84,7 @@ std::optional<SourceRef> ValidationError::GetSourceRef() const
         return {};
     }
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

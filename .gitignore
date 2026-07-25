@@ -3,3 +3,6 @@
 .vscode/
 
 build/
+
+# macOS out-of-source build directory
+/build-mac/

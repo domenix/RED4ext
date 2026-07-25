@@ -7,7 +7,7 @@
 #include <toml11/parser.hpp>
 #include <toml11/types.hpp>
 
-#include <Windows.h>
+#include "Platform.hpp"
 
 #include <exception>
 #include <filesystem>

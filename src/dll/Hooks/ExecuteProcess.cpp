@@ -5,7 +5,8 @@
 #include "Hook.hpp"
 #include "ScriptCompiler/ScriptCompilerSettings.hpp"
 #include "Systems/ScriptCompilationSystem.hpp"
-#include <windows.h>
+#include "Platform.hpp"
+#include "Platform/SccLoader.hpp"
 
 namespace
 {
@@ -18,21 +19,22 @@ Hook<decltype(&_Global_ExecuteProcess)> Global_ExecuteProcess(Hashes::Global_Exe
 bool _Global_ExecuteProcess(void* a1, RED4ext::CString& aCommand, FixedWString& aArgs,
                             RED4ext::CString& aCurrentDirectory, char a5)
 {
-    if (strstr(aCommand.c_str(), "scc.exe") == nullptr)
+    if (strstr(aCommand.c_str(), Platform::GetSccExecutableName()) == nullptr)
     {
         return Global_ExecuteProcess(a1, aCommand, aArgs, aCurrentDirectory, a5);
     }
 
     auto sccPath = std::filesystem::path(aCommand.c_str());
-    auto& sccLib = sccPath.replace_filename("scc_lib.dll");
-    auto sccHandle = LoadLibrary(sccLib.c_str());
+    auto& sccLib = sccPath.replace_filename(Platform::GetSccLibraryName());
+
+    Platform::UniqueModule sccHandle(Platform::LoadModule(sccLib, false));
     if (sccHandle)
     {
-        auto scc = scc_load_api(sccHandle);
+        auto scc = Platform::LoadSccApi(sccHandle.get());
         return ExecuteScc(scc);
     }
 
-    spdlog::info(L"Could not load the scc library from '{}', falling back to the CLI", sccLib.native());
+    spdlog::info(L"Could not load the scc library from '{}', falling back to the CLI", sccLib);
 
     auto str = App::Get()->GetScriptCompilationSystem()->GetCompilationArgs(aArgs);
 
@@ -175,7 +177,7 @@ bool ExecuteScc(SccApi& scc)
     if (settings.SupportsOutputCacheFileParameter())
     {
         scriptSystem->SetModdedScriptsBlob(moddedCacheFile);
-        engine->scriptsBlobPath = Utils::Narrow(moddedCacheFile.c_str());
+        engine->scriptsBlobPath = Utils::NarrowPath(moddedCacheFile).c_str();
         spdlog::info(L"Scripts blob path was updated to '{}'", moddedCacheFile);
     }
 

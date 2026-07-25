@@ -15,4 +15,9 @@ private:
 
     FILE* m_stdoutStream;
     FILE* m_stderrStream;
+
+#ifndef _WIN32
+    // Nothing is allocated on macOS; the process already has usable standard streams.
+    bool m_hasInheritedConsole = false;
+#endif
 };

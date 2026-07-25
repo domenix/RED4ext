@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Addresses.hpp"
+#include "Platform/HookEngine.hpp"
 
 template<typename T>
 class Hook
@@ -48,7 +49,15 @@ public:
             m_address = reinterpret_cast<T>(GetAddress());
         }
 
-        auto result = DetourAttach(&m_address, m_detour);
+        // Nothing resolved this target's address. On macOS that is the normal outcome for a
+        // hook whose entry point has not been located in the Mac binary yet; attaching to
+        // address 0 would take the process down, so report it instead.
+        if (m_address == 0)
+        {
+            return HookEngine::ErrorInvalidTarget;
+        }
+
+        auto result = HookEngine::Attach(reinterpret_cast<void**>(&m_address), reinterpret_cast<void*>(m_detour));
         m_isAttached = result == NO_ERROR;
 
         return result;
@@ -61,7 +70,7 @@ public:
             return 0;
         }
 
-        auto result = DetourDetach(&m_address, m_detour);
+        auto result = HookEngine::Detach(reinterpret_cast<void**>(&m_address), reinterpret_cast<void*>(m_detour));
         m_isAttached = result == NO_ERROR;
 
         return result;

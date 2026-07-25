@@ -35,7 +35,8 @@ private:
     void Load(const std::filesystem::path& aPath, bool aUseAlteredSearchPath);
     MapIter_t Unload(std::shared_ptr<PluginBase> aPlugin);
 
-    std::shared_ptr<PluginBase> CreatePlugin(const std::filesystem::path& aPath, wil::unique_hmodule aModule) const;
+    std::shared_ptr<PluginBase> CreatePlugin(const std::filesystem::path& aPath,
+                                            Platform::UniqueModule aModule) const;
 
     const Config::PluginsConfig& m_config;
     const Paths& m_paths;

@@ -3,9 +3,8 @@
 #include <RED4ext/Api/v1/EMainReason.hpp>
 #include <RED4ext/Api/v1/FileVer.hpp>
 #include <RED4ext/Api/v1/SemVer.hpp>
-#include <wil/resource.h>
 
-#include <Windows.h>
+#include "Platform.hpp"
 
 #include <cstdint>
 #include <filesystem>
@@ -14,7 +13,7 @@
 class PluginBase
 {
 public:
-    PluginBase(const std::filesystem::path& aPath, wil::unique_hmodule aModule);
+    PluginBase(const std::filesystem::path& aPath, Platform::UniqueModule aModule);
     virtual ~PluginBase() = default;
 
     virtual const uint32_t GetApiVersion() const = 0;
@@ -35,5 +34,5 @@ public:
 
 private:
     std::filesystem::path m_path;
-    wil::unique_hmodule m_module;
+    Platform::UniqueModule m_module;
 };

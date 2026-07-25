@@ -72,7 +72,16 @@ private:
             }
         }
 
-        logger->log(aLevel, aText);
+        // spdlog::logger's wide-string overloads only exist on Windows, where wchar_t is
+        // UTF-16 and the conversion is a Win32 call. Elsewhere, convert before logging.
+        if constexpr (std::is_same_v<T, wchar_t> && !RED4EXT_PLATFORM_WIDE_LOGGING)
+        {
+            logger->log(aLevel, Utils::Narrow(aText));
+        }
+        else
+        {
+            logger->log(aLevel, aText);
+        }
     }
 
     const Paths& m_paths;

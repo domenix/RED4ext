@@ -4,15 +4,14 @@
 #include <RED4ext/Api/v1/EMainReason.hpp>
 #include <RED4ext/Api/v1/PluginHandle.hpp>
 #include <spdlog/spdlog.h>
-#include <wil/resource.h>
 
-#include <Windows.h>
+#include "Platform.hpp"
 
 #include <exception>
 #include <filesystem>
 #include <utility>
 
-PluginBase::PluginBase(const std::filesystem::path& aPath, wil::unique_hmodule aModule)
+PluginBase::PluginBase(const std::filesystem::path& aPath, Platform::UniqueModule aModule)
     : m_path(aPath)
     , m_module(std::move(aModule))
 {
@@ -37,12 +36,12 @@ bool PluginBase::Query()
     spdlog::trace(L"Calling 'Query' function exported by '{}'...", stem);
 
     using Query_t = void (*)(void*);
-    auto queryFn = reinterpret_cast<Query_t>(GetProcAddress(module, "Query"));
+    auto queryFn = reinterpret_cast<Query_t>(Platform::GetSymbol(module, "Query"));
     if (!queryFn)
     {
         auto msg = Utils::FormatLastError();
         spdlog::warn(L"Could not retrieve 'Query' function from '{}'. Error code: {}, msg: '{}', path: '{}'", stem,
-                     GetLastError(), msg, path);
+                     Platform::GetLastErrorCode(), msg, path);
         return false;
     }
 
@@ -90,7 +89,7 @@ bool PluginBase::Main(RED4ext::v1::EMainReason aReason)
     spdlog::trace(L"Calling 'Main' function exported by '{}' with reason '{}'...", name, reasonStr);
 
     using Main_t = bool (*)(RED4ext::v1::PluginHandle, RED4ext::v1::EMainReason, const void*);
-    auto mainFn = reinterpret_cast<Main_t>(GetProcAddress(module, "Main"));
+    auto mainFn = reinterpret_cast<Main_t>(Platform::GetSymbol(module, "Main"));
     if (mainFn)
     {
         try

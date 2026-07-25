@@ -8,14 +8,13 @@
 #include <RED4ext/Api/ApiVersion.hpp>
 #include <RED4ext/Api/v1/FileVer.hpp>
 #include <RED4ext/Api/v1/SemVer.hpp>
-#include <wil/resource.h>
 
 #include <cstdint>
 #include <filesystem>
 #include <string_view>
 #include <utility>
 
-v1::Plugin::Plugin(const std::filesystem::path& aPath, wil::unique_hmodule aModule)
+v1::Plugin::Plugin(const std::filesystem::path& aPath, Platform::UniqueModule aModule)
     : PluginBase(aPath, std::move(aModule))
     , m_info{}
     , m_sdk{}

@@ -1,5 +1,6 @@
 #include "App.hpp"
 #include "Addresses.hpp"
+#include "Platform.hpp"
 #include "DetourTransaction.hpp"
 #include "Image.hpp"
 #include "Utils.hpp"
@@ -27,7 +28,7 @@ App::App()
 {
     if (m_config.GetDev().waitForDebugger)
     {
-        while (!IsDebuggerPresent())
+        while (!Platform::IsDebuggerAttached())
         {
             std::this_thread::yield();
         }
@@ -80,7 +81,7 @@ App::App()
         spdlog::debug(L"  plugins.ignored: [ {} ]", fmt::join(ignored, L", "));
     }
 
-    spdlog::debug("Base address is: {}", reinterpret_cast<void*>(GetModuleHandle(nullptr)));
+    spdlog::debug("Base address is: {}", reinterpret_cast<void*>(Platform::GetImageBase()));
 
     const auto image = Image::Get();
     const auto& fileVer = image->GetFileVersion();
@@ -224,6 +225,7 @@ bool App::AttachHooks() const
         return false;
     }
 
+#ifdef _WIN32
     auto success = Hooks::WinMain::Attach() && Hooks::QuickExit::Attach() && Hooks::CGameApplication::Attach() &&
                    Hooks::ExecuteProcess::Attach() && Hooks::InitScripts::Attach() && Hooks::LoadScripts::Attach() &&
                    Hooks::ValidateScripts::Attach() && Hooks::AssertionFailed::Attach() &&
@@ -234,4 +236,54 @@ bool App::AttachHooks() const
     }
 
     return false;
+#else
+    // Every hook is attempted, and the transaction is committed as long as at least one of them
+    // took. The Windows path short-circuits on the first failure and commits nothing, which is
+    // right there: a hook that cannot attach means a broken install.
+    //
+    // On macOS most of these entry points have simply not been located in the Mac binary yet.
+    // Short-circuiting would throw away the ones that did resolve -- including the startup hook,
+    // which is what gets the plugin system running -- so instead we attach what we can and say
+    // plainly what is missing.
+    struct HookEntry
+    {
+        const char* name;
+        bool (*attach)();
+    };
+
+    static constexpr HookEntry hooks[] = {
+        {"WinMain", &Hooks::WinMain::Attach},
+        {"QuickExit", &Hooks::QuickExit::Attach},
+        {"CGameApplication", &Hooks::CGameApplication::Attach},
+        {"ExecuteProcess", &Hooks::ExecuteProcess::Attach},
+        {"InitScripts", &Hooks::InitScripts::Attach},
+        {"LoadScripts", &Hooks::LoadScripts::Attach},
+        {"ValidateScripts", &Hooks::ValidateScripts::Attach},
+        {"AssertionFailed", &Hooks::AssertionFailed::Attach},
+        {"CollectSaveableSystems", &Hooks::CollectSaveableSystems::Attach},
+        {"gsmState_SessionActive", &Hooks::gsmState_SessionActive::Attach},
+    };
+
+    std::vector<const char*> attached;
+    std::vector<const char*> unresolved;
+
+    for (const auto& hook : hooks)
+    {
+        (hook.attach() ? attached : unresolved).push_back(hook.name);
+    }
+
+    if (attached.empty())
+    {
+        spdlog::error("No hooks could be attached; none of their addresses are known for this build");
+        return false;
+    }
+
+    spdlog::info("{} of {} hooks attached", attached.size(), std::size(hooks));
+    if (!unresolved.empty())
+    {
+        spdlog::warn("Not attached, address unknown in the Mac binary: {}", fmt::join(unresolved, ", "));
+    }
+
+    return transaction.Commit();
+#endif
 }

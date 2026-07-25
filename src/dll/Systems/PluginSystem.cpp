@@ -17,9 +17,8 @@
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
-#include <wil/resource.h>
 
-#include <Windows.h>
+#include "Platform.hpp"
 
 #include <cstdint>
 #include <exception>
@@ -142,10 +141,10 @@ void PluginSystem::Startup()
             continue;
         }
 
-        if (entry.is_regular_file(ec) && path.extension() == L".dll")
+        if (entry.is_regular_file(ec) && path.extension() == Platform::GetPluginExtension())
         {
             const auto stem = path.stem();
-            if (m_config.ignored.contains(stem))
+            if (m_config.ignored.contains(stem.wstring()))
             {
                 spdlog::debug(L"Skipping loading '{}', the plugin is ignored by the user. Path: '{}", stem, path);
                 continue;
@@ -225,25 +224,30 @@ void PluginSystem::Load(const std::filesystem::path& aPath, bool aUseAlteredSear
 {
     spdlog::info(L"Loading plugin from '{}'...", aPath);
 
-    uint32_t flags = 0;
-    if (aUseAlteredSearchPath)
-    {
-        flags = LOAD_WITH_ALTERED_SEARCH_PATH;
-    }
-
     const auto stem = aPath.stem();
 
-    wil::unique_hmodule handle;
-    if (aPath.extension() == L".exe")
-        handle.reset(GetModuleHandleA(nullptr));
+    Platform::UniqueModule handle;
+    if (aPath == m_paths.GetExe())
+    {
+        // The game executable itself, which Startup loads last so the playground harness can
+        // export plugin functions from it. What is wanted is a handle for the main program,
+        // not a fresh load of a file.
+        //
+        // Identity rather than a ".exe" extension: the Mac executable has no extension at all,
+        // so the old test missed it and tried to dlopen the running binary. On Windows the two
+        // tests agree -- the only path that ever reaches here with a ".exe" suffix is this one.
+        handle.reset(Platform::GetMainModule());
+    }
     else
-        handle.reset(LoadLibraryEx(aPath.c_str(), nullptr, flags));
+    {
+        handle.reset(Platform::LoadModule(aPath, aUseAlteredSearchPath));
+    }
 
     if (!handle)
     {
         auto msg = Utils::FormatLastError();
-        spdlog::warn(L"Could not load plugin '{}'. Error code: {}, msg: '{}', path: '{}'", stem, GetLastError(), msg,
-                     aPath);
+        spdlog::warn(L"Could not load plugin '{}'. Error code: {}, msg: '{}', path: '{}'", stem,
+                     Platform::GetLastErrorCode(), msg, aPath);
         return;
     }
 
@@ -333,22 +337,31 @@ PluginSystem::MapIter_t PluginSystem::Unload(std::shared_ptr<PluginBase> aPlugin
 }
 
 std::shared_ptr<PluginBase> PluginSystem::CreatePlugin(const std::filesystem::path& aPath,
-                                                       wil::unique_hmodule aModule) const
+                                                       Platform::UniqueModule aModule) const
 {
     const auto stem = aPath.stem();
 
     using Supports_t = uint32_t (*)();
-    auto supportsFn = reinterpret_cast<Supports_t>(GetProcAddress(aModule.get(), "Supports"));
+    auto supportsFn = reinterpret_cast<Supports_t>(Platform::GetSymbol(aModule.get(), "Supports"));
     if (!supportsFn)
     {
         // If 'Supports' doesn't exists then the plugin might not be a RED4ext plugin. It might be a dependency.
-        auto err = GetLastError();
+        //
+        // Windows distinguishes "no such export" from a real failure with ERROR_PROC_NOT_FOUND.
+        // dlsym has no equivalent code -- a missing symbol is its ordinary negative answer --
+        // so on other platforms this is simply not a warning.
+#ifdef _WIN32
+        auto err = Platform::GetLastErrorCode();
         if (err != ERROR_PROC_NOT_FOUND)
         {
             auto msg = Utils::FormatLastError();
             spdlog::warn(L"Could not retrieve 'Supports' function from '{}'. Error code: {}, msg: '{}', path: '{}'",
-                         stem, GetLastError(), msg, aPath);
+                         stem, Platform::GetLastErrorCode(), msg, aPath);
         }
+#else
+        spdlog::trace(L"'{}' does not export a 'Supports' function, it is not a RED4ext plugin. Path: '{}'", stem,
+                      aPath);
+#endif
 
         return nullptr;
     }
