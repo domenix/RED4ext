@@ -34,8 +34,7 @@ DevConsole::DevConsole(const Config::DevConfig& aConfig)
         auto err = freopen_s(&m_stdoutStream, "CONOUT$", "w", stdout);
         if (err != 0)
         {
-            SHOW_MESSAGE_BOX_FILE_LINE(MB_ICONWARNING | MB_OK,
-                                       L"Could not redirect the standard output to console.");
+            SHOW_MESSAGE_BOX_FILE_LINE(MB_ICONWARNING | MB_OK, L"Could not redirect the standard output to console.");
         }
 
         err = freopen_s(&m_stderrStream, "CONOUT$", "w", stderr);

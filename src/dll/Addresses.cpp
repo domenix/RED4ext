@@ -280,8 +280,8 @@ void Addresses::LoadAddresses(const std::filesystem::path& aPath)
             const auto prefix = addressStr.starts_with("0x") || addressStr.starts_with("0X") ? 2u : 0u;
 
             std::uintptr_t staticAddress = 0;
-            const auto result = std::from_chars(addressStr.data() + prefix, addressStr.data() + addressStr.size(),
-                                                staticAddress, 16);
+            const auto result =
+                std::from_chars(addressStr.data() + prefix, addressStr.data() + addressStr.size(), staticAddress, 16);
             if (result.ec != std::errc())
             {
                 spdlog::error("Skipping entry {} because '{}' is not a hexadecimal address", hash, addressStr);

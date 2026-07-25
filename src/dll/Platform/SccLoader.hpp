@@ -22,10 +22,7 @@ inline SccApi LoadSccApi(HMODULE aModule)
 #if defined(_WIN32)
     return scc_load_api(aModule);
 #else
-    const auto symbol = [aModule](const char* aName)
-    {
-        return Platform::GetSymbol(aModule, aName);
-    };
+    const auto symbol = [aModule](const char* aName) { return Platform::GetSymbol(aModule, aName); };
 
     SccApi api = {
         (scc_settings_new*)symbol("scc_settings_new"),

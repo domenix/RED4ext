@@ -7,10 +7,10 @@ set_target_properties(
 )
 
 if(WIN32)
-  red4ext_configure_resource_rc(
-    RED4ext.Dll
-    "A script extender for REDengine 4."
-  )
+red4ext_configure_resource_rc(
+  RED4ext.Dll
+  "A script extender for REDengine 4."
+)
 endif()
 
 red4ext_configure_version_file(RED4ext.Dll)

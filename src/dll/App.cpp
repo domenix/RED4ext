@@ -1,8 +1,8 @@
 #include "App.hpp"
 #include "Addresses.hpp"
-#include "Platform.hpp"
 #include "DetourTransaction.hpp"
 #include "Image.hpp"
+#include "Platform.hpp"
 #include "Utils.hpp"
 #include "Version.hpp"
 

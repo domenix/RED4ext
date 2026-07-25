@@ -44,8 +44,9 @@ ValidationError ValidationError::FromString(const char* str)
     {
         type = ValidationErrorType::BaseClassMismatch;
     }
-    else if (sscanf(str, "Imported property '%63[^.].%63[^']' type '%*[^']' does not match with the native one '%*[^']'",
-                      parent, name) == 2)
+    else if (sscanf(str,
+                    "Imported property '%63[^.].%63[^']' type '%*[^']' does not match with the native one '%*[^']'",
+                    parent, name) == 2)
     {
         type = ValidationErrorType::PropertyTypeMismatch;
     }

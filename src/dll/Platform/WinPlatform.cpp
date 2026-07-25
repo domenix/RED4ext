@@ -200,12 +200,6 @@ int32_t Platform::ShowMessageBox(const std::wstring_view aCaption, const std::ws
 void Platform::TerminateCurrentProcess(uint32_t aExitCode)
 {
     ::TerminateProcess(::GetCurrentProcess(), aExitCode);
-
-    // TerminateProcess is asynchronous with respect to the caller; the function is marked
-    // noreturn, so make that true.
-    for (;;)
-    {
-    }
 }
 
 bool Platform::IsDebuggerAttached()

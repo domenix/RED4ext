@@ -15,7 +15,7 @@ bool isAttached = false;
 #define RED4EXT_ENTRY_SIGNATURE HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow
 #define RED4EXT_ENTRY_ARGUMENTS hInstance, hPrevInstance, pCmdLine, nCmdShow
 #else
-#define RED4EXT_ENTRY_SIGNATURE int argc, char** argv
+#define RED4EXT_ENTRY_SIGNATURE int argc, char **argv
 #define RED4EXT_ENTRY_ARGUMENTS argc, argv
 #endif
 

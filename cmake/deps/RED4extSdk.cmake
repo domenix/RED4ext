@@ -13,12 +13,12 @@ if(RED4EXT_SDK_SOURCE_DIR)
   message(STATUS "Using local RED4ext.SDK: ${RED4EXT_SDK_SOURCE_DIR}")
   add_subdirectory("${RED4EXT_SDK_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/_deps/red4ext.sdk-build")
 else()
-  FetchContent_Declare(
-    RED4ext.SDK
-    GIT_REPOSITORY  https://github.com/wopss/RED4ext.SDK.git
-    GIT_TAG         1.0.0
-  )
-  FetchContent_MakeAvailable(RED4ext.SDK)
+FetchContent_Declare(
+  RED4ext.SDK
+  GIT_REPOSITORY  https://github.com/wopss/RED4ext.SDK.git
+  GIT_TAG         1.0.0
+)
+FetchContent_MakeAvailable(RED4ext.SDK)
 endif()
 
 set_target_properties(

@@ -1,5 +1,5 @@
-#include "Platform/HookEngine.hpp"
 #include "Platform.hpp"
+#include "Platform/HookEngine.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -176,9 +176,9 @@ int64_t Imm14Offset(uint32_t aInsn)
  */
 struct BranchFixup
 {
-    size_t insnIndex;  // index into the emitted word buffer
-    uint64_t target;   // absolute destination
-    uint32_t immBits;  // 26, 19 or 14
+    size_t insnIndex; // index into the emitted word buffer
+    uint64_t target;  // absolute destination
+    uint32_t immBits; // 26, 19 or 14
 };
 
 struct Relocation
@@ -729,7 +729,7 @@ bool HookEngine::Commit()
     for (const auto& op : State().pending)
     {
         const auto result = op.kind == PendingOperation::Kind::Attach ? ApplyAttach(op.slot, op.detour)
-                                                                     : ApplyDetach(op.slot, op.detour);
+                                                                      : ApplyDetach(op.slot, op.detour);
         if (result != Success)
         {
             State().lastResult = result;

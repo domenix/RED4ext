@@ -55,23 +55,23 @@ option(RED4EXT_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." OFF
 # Toolchain settings for all targets
 # ------------------------------------------------------------------------------
 if(WIN32)
-  add_compile_definitions(
-    UNICODE
-    _UNICODE
-    WIN32_LEAN_AND_MEAN
+add_compile_definitions(
+  UNICODE
+  _UNICODE
+  WIN32_LEAN_AND_MEAN
 
-    # Support Windows 7 and above.
-    WINVER=0x0601
-    _WIN32_WINNT=0x0601
-  )
+  # Support Windows 7 and above.
+  WINVER=0x0601
+  _WIN32_WINNT=0x0601
+)
 endif()
 
 if(MSVC)
-  add_link_options(
-    /DEBUG:FULL
+add_link_options(
+  /DEBUG:FULL
 
-    $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/INCREMENTAL:NO>
-  )
+  $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/INCREMENTAL:NO>
+)
 endif()
 
 if(APPLE)
@@ -106,39 +106,39 @@ include("${RED4EXT_CMAKE_DEPS_DIR}/Toml11.cmake")
 # Toolchain settings for this project only
 # ------------------------------------------------------------------------------
 if(WIN32)
-  add_compile_definitions(
-    NOMINMAX
-  )
+add_compile_definitions(
+  NOMINMAX
+)
 endif()
 
 if(MSVC)
-  add_compile_options(
-    /GS
-    /sdl
+add_compile_options(
+  /GS
+  /sdl
 
-    /permissive-
-    /Zc:__cplusplus
-    /Zc:__STDC__
-    /Zc:enumTypes
-    /Zc:inline
-    /Zc:preprocessor
-    /Zc:templateScope
+  /permissive-
+  /Zc:__cplusplus
+  /Zc:__STDC__
+  /Zc:enumTypes
+  /Zc:inline
+  /Zc:preprocessor
+  /Zc:templateScope
 
-    $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/Gy>
-    $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/Oi>
+  $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/Gy>
+  $<$<CONFIG:Release,MinSizeRel,RelWithDebInfo>:/Oi>
 
-    # Disable some warnings that are not relevant to us.
-    /external:I${FETCHCONTENT_BASE_DIR}
-    /external:W0
-  )
+  # Disable some warnings that are not relevant to us.
+  /external:I${FETCHCONTENT_BASE_DIR}
+  /external:W0
+)
 
-  if(RED4EXT_EXTRA_WARNINGS)
-    add_compile_options(/W4)
-  endif()
+if(RED4EXT_EXTRA_WARNINGS)
+  add_compile_options(/W4)
+endif()
 
-  if(RED4EXT_TREAT_WARNINGS_AS_ERRORS)
-    add_compile_options(/WX)
-  endif()
+if(RED4EXT_TREAT_WARNINGS_AS_ERRORS)
+  add_compile_options(/WX)
+endif()
 else()
   # The SDK needs these three even on Clang; see RED4ext.SDK's own build.
   add_compile_options(
@@ -169,15 +169,15 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
   set(RED4EXT_INSTALL_BIN_DIR red4ext)
 
   if(WIN32)
-    install(
-      TARGETS RED4ext.Loader
-      RUNTIME DESTINATION "${RED4EXT_INSTALL_X64_DIR}"
-    )
+  install(
+    TARGETS RED4ext.Loader
+    RUNTIME DESTINATION "${RED4EXT_INSTALL_X64_DIR}"
+  )
 
-    install(
-      FILES $<TARGET_PDB_FILE:RED4ext.Loader>
-      DESTINATION "${RED4EXT_INSTALL_X64_DIR}"
-    )
+  install(
+    FILES $<TARGET_PDB_FILE:RED4ext.Loader>
+    DESTINATION "${RED4EXT_INSTALL_X64_DIR}"
+  )
   endif()
 
   install(
@@ -187,10 +187,10 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
   )
 
   if(MSVC)
-    install(
-      FILES $<TARGET_PDB_FILE:RED4ext.Dll>
-      DESTINATION "${RED4EXT_INSTALL_BIN_DIR}"
-    )
+  install(
+    FILES $<TARGET_PDB_FILE:RED4ext.Dll>
+    DESTINATION "${RED4EXT_INSTALL_BIN_DIR}"
+  )
   endif()
 
   install(

@@ -3,10 +3,10 @@
 #include "App.hpp"
 #include "Detail/AddressHashes.hpp"
 #include "Hook.hpp"
-#include "ScriptCompiler/ScriptCompilerSettings.hpp"
-#include "Systems/ScriptCompilationSystem.hpp"
 #include "Platform.hpp"
 #include "Platform/SccLoader.hpp"
+#include "ScriptCompiler/ScriptCompilerSettings.hpp"
+#include "Systems/ScriptCompilationSystem.hpp"
 
 namespace
 {

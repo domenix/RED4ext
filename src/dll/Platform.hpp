@@ -288,8 +288,13 @@ int32_t ShowMessageBox(const std::wstring_view aCaption, const std::wstring_view
 
 /**
  * @brief Kill the current process without running static destructors.
+ *
+ * Deliberately not marked [[noreturn]], even though it never returns in practice. The callers
+ * are macros that other code follows with a `return`, and declaring this noreturn makes those
+ * returns unreachable -- which MSVC reports as C4702 and the Windows build promotes to an
+ * error. Upstream's TerminateProcess was not noreturn either.
  */
-[[noreturn]] void TerminateCurrentProcess(uint32_t aExitCode);
+void TerminateCurrentProcess(uint32_t aExitCode);
 
 /**
  * @brief Whether a debugger is attached right now.

@@ -201,8 +201,7 @@ void RunCase(const Case& aCase)
         return;
     }
 
-    const auto attachResult =
-        HookEngine::Attach(reinterpret_cast<void**>(&slot), reinterpret_cast<void*>(&DetourFn));
+    const auto attachResult = HookEngine::Attach(reinterpret_cast<void**>(&slot), reinterpret_cast<void*>(&DetourFn));
     Check("attach queued", attachResult == HookEngine::Success);
 
     const auto committed = HookEngine::Commit();
