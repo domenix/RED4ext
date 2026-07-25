@@ -144,7 +144,7 @@ HMODULE Platform::GetMainModule()
     return ::GetModuleHandle(nullptr);
 }
 
-void Platform::FreeModule(HMODULE aModule)
+void Platform::UnloadModule(HMODULE aModule)
 {
     if (aModule)
     {

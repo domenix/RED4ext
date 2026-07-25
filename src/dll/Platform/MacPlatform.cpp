@@ -189,8 +189,8 @@ uintptr_t Platform::GetEntryPoint()
             return reinterpret_cast<uintptr_t>(header) + static_cast<uintptr_t>(entry->entryoff);
         }
 
-        command = reinterpret_cast<const struct load_command*>(reinterpret_cast<const uint8_t*>(command) +
-                                                               command->cmdsize);
+        command =
+            reinterpret_cast<const struct load_command*>(reinterpret_cast<const uint8_t*>(command) + command->cmdsize);
     }
 
     return 0;
@@ -376,7 +376,7 @@ HMODULE Platform::GetMainModule()
     return dlopen(nullptr, RTLD_NOW | RTLD_GLOBAL);
 }
 
-void Platform::FreeModule(HMODULE aModule)
+void Platform::UnloadModule(HMODULE aModule)
 {
     if (aModule)
     {
@@ -477,8 +477,8 @@ int32_t Platform::ShowMessageBox(const std::wstring_view aCaption, const std::ws
     constexpr CFTimeInterval kTimeoutSeconds = 30.0;
 
     CFOptionFlags response = 0;
-    const auto status = CFUserNotificationDisplayAlert(kTimeoutSeconds, level, nullptr, nullptr, nullptr, caption,
-                                                       text, defaultButton, alternateButton, nullptr, &response);
+    const auto status = CFUserNotificationDisplayAlert(kTimeoutSeconds, level, nullptr, nullptr, nullptr, caption, text,
+                                                       defaultButton, alternateButton, nullptr, &response);
 
     if (caption)
     {

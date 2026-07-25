@@ -182,7 +182,14 @@ HMODULE LoadModule(const std::filesystem::path& aPath, bool aUseAlteredSearchPat
  */
 HMODULE GetMainModule();
 
-void FreeModule(HMODULE aModule);
+/**
+ * @brief Release a module loaded by LoadModule.
+ *
+ * Named UnloadModule rather than the more symmetrical FreeModule because <Windows.h> defines
+ * FreeModule as a macro expanding to FreeLibrary, which mangles the declaration even inside a
+ * namespace.
+ */
+void UnloadModule(HMODULE aModule);
 void* GetSymbol(HMODULE aModule, const char* aName);
 
 /**
@@ -236,7 +243,7 @@ public:
     {
         if (m_module && m_module != aModule)
         {
-            FreeModule(m_module);
+            UnloadModule(m_module);
         }
 
         m_module = aModule;
