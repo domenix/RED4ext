@@ -93,13 +93,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The macOS build needs an SDK that compiles with Clang, which the pinned 1.0.0 tag does
-      # not. Until a released SDK carries the port, check one out and point the build at it.
+      # The macOS build needs an SDK that compiles with Clang. Neither the pinned 1.0.0 tag nor
+      # upstream master does: master lacks the port entirely, and its precompiled header
+      # includes <intrin.h> and <Windows.h> unconditionally. Until that lands upstream, build
+      # against the branch carrying the port.
       - name: Checkout RED4ext.SDK
         uses: actions/checkout@v6
         with:
-          repository: WopsS/RED4ext.SDK
-          ref: master
+          repository: domenix/RED4ext.SDK
+          ref: macos-arm64-compile
           path: .sdk
 
       - name: Install Ninja
